@@ -2,6 +2,11 @@ import sys
 import random
 
 
+def quitProgram():
+    print("Quitting Program")
+    sys.exit()
+
+
 class Customer:
     clientDict = {}
 
@@ -58,7 +63,7 @@ class Customer:
         Customer.clientDict.update(
             {client_id: cls(clientName, clientAge, clientAmount)})
         print(
-            f'\nHi {Customer.clientDict[client_id].name}. Welcome to XYZ bank. Your client id is {client_id} Please select which banking product you want to add')
+            f'\nHi {Customer.clientDict[client_id].name}. Welcome to XYZ bank.')
 
     @staticmethod  # Welcome Screen prompting user for Client / Admin or quit the program i.e. option 1,2 and 3
     def welcomeScreen():
@@ -75,8 +80,7 @@ class Customer:
             profile = Customer.admin()
             return [profile]
         elif optionSelected == 3:
-            print("Quitting Program")
-            sys.exit()
+            quitProgram()
 
     @staticmethod
     def client():
@@ -95,7 +99,7 @@ class Customer:
             if adminUserName != 'admin' or adminPassword != 'admin':
                 print("\nIncorrect username or password. Try again\n")
             else:
-                print("Successfully authenticated")
+                print("\nSuccessfully authenticated")
                 return profile
                 break
 
@@ -167,7 +171,7 @@ class AdminOptions():  # no initialization of object in this class is created to
     def adminWelcomeScreen():
         print("\nHello Admin")
         adminOptions = ["Show total CHQ account", "Show total client",
-                        "Show total based on product code CHQ,CBK,CBW,SAV", "Show customer more than annual income,Quit Program"]
+                        "Show total based on product code CHQ,CBK,CBW,SAV", "Show customer more than annual income", "Quit Program"]
         for eno, product in enumerate(adminOptions):
             print(f'{eno+1} - {product}')
         optionSelected = Customer.inputCheckInt(
@@ -178,63 +182,109 @@ class AdminOptions():  # no initialization of object in this class is created to
     def fileReader(filename):
         try:
             with open(filename, "r") as db_txt_file_read:
+                all_lines_in_list = []
                 all_lines = db_txt_file_read.readlines()
-                return all_lines
+                for items in all_lines:
+                    lineItem = items.rstrip().split(',')
+                    all_lines_in_list.append(lineItem)
+                return all_lines_in_list
         except:
             print(f'\nError in finding or opening file - {filename}')
 
     @staticmethod
-    def totalCHQaccounts(all_lines):  # all_lines are all the entry in the input file
-        pass
-
-    @staticmethod
-    def totalClients(all_lines):
-        pass
-
-    @staticmethod
-    def totalByProductCode(all_lines, product_code):
-        pass
+    # all_lines are all the entry in the input file it is a list of list format
+    def totalByProductCode(all_lines, productCode):
+        totalAccount = 0
+        for entry in all_lines:
+            if entry[4] == productCode:
+                totalAccount += 1
+        return productCode, totalAccount
 
     @staticmethod
     def totalCustomerAnnualIncome(all_lines, input_income):
-        pass
+        totalCustomers = 0
+        for entry in all_lines:
+            if float(entry[3]) >= input_income:
+                totalCustomers += 1
+        return totalCustomers
+
+
+def clientInteractions():
+    client_id = Customer.createClientID()
+    Customer.createClient(
+        client_id, returnList[1], returnList[2], returnList[3])  # 1,2 and 3 represent uname, age, amount
+    optionSelected = Product.productsToEnroll()
+    if optionSelected == 1:
+        productCode, chqAccountNumber = Product.chqAccount()
+        print(
+            f'\nHi {returnList[1]} a new Chequing account ({productCode}) with number {chqAccountNumber} is created.')
+        Product.clientProductMapping(
+            client_id, productCode, chqAccountNumber)
+        fileWriter(client_id)
+    elif optionSelected == 2:
+        productCode, ccCardNumber = Product.ccAccount(returnList[3])
+        print(
+            f'\nHi {returnList[1]} a new {productCode} credit card with number {ccCardNumber} is created.')
+        Product.clientProductMapping(client_id, productCode, ccCardNumber)
+        fileWriter(client_id)
+    elif optionSelected == 3:
+        productCode, savAccountNumber = Product.savAccount()
+        print(
+            f'\nHi {returnList[1]} a new Savings account ({productCode}) with number {savAccountNumber} is created.')
+        Product.clientProductMapping(
+            client_id, productCode, savAccountNumber)
+        fileWriter(client_id)
+
+
+def adminInteractions():
+    all_lines_in_list = AdminOptions.fileReader(fileName)
+    optionSelected = AdminOptions.adminWelcomeScreen()
+    if optionSelected == 1:
+        productCode, totalAccount = AdminOptions.totalByProductCode(
+            all_lines_in_list, "CHQ")
+        print(
+            f'The total number of CHQ accounts = {totalAccount}')
+    elif optionSelected == 2:
+        print(f'The total number of clients = {len(all_lines_in_list)}')
+    elif optionSelected == 3:
+        validProdCodes = ["CHQ", "CBK", "CBW", "SAV"]
+        while True:
+            adminInputCode = input("\nEnter a product code -> ").upper()
+            if adminInputCode not in validProdCodes:
+                print(f'{adminInputCode} is not a valid code. Try again.')
+                continue
+            else:
+                break
+        productCode, totalAccount = AdminOptions.totalByProductCode(
+            all_lines_in_list, adminInputCode)
+    elif optionSelected == 4:
+        adminInputCode = Customer.inputCheckFloat(
+            "\nEnter the annual income amount -> ")
+        totalCustomers = AdminOptions.totalCustomerAnnualIncome(
+            all_lines_in_list, adminInputCode)
+        print(
+            f'The total number of clients with amount >= ${adminInputCode} = {totalCustomers}')
+    elif optionSelected == 5:
+        quitProgram()
 
 
 fileName = "xyz_database.txt"
+counter = 0
 while True:
-    retrunList = Customer.welcomeScreen()
-    if retrunList[0] == 'client':
-        client_id = Customer.createClientID()
-        Customer.createClient(
-            client_id, retrunList[1], retrunList[2], retrunList[3])  # 1,2 and 3 represent uname, age, amount
-        optionSelected = Product.productsToEnroll()
-        if optionSelected == 1:
-            productCode, chqAccountNumber = Product.chqAccount()
-            print(
-                f'\nHi {retrunList[1]} a new Chequing account ({productCode}) with number {chqAccountNumber} is created.')
-            Product.clientProductMapping(
-                client_id, productCode, chqAccountNumber)
-            fileWriter(client_id)
-        elif optionSelected == 2:
-            productCode, ccCardNumber = Product.ccAccount(retrunList[3])
-            print(
-                f'\nHi {retrunList[1]} a new {productCode} credit card with number {ccCardNumber} is created.')
-            Product.clientProductMapping(client_id, productCode, ccCardNumber)
-            fileWriter(client_id)
-        elif optionSelected == 3:
-            productCode, savAccountNumber = Product.savAccount()
-            print(
-                f'\nHi {retrunList[1]} a new Savings account ({productCode}) with number {savAccountNumber} is created.')
-            Product.clientProductMapping(
-                client_id, productCode, savAccountNumber)
-            fileWriter(client_id)
-    elif retrunList[0] == 'admin':
-        all_lines = AdminOptions.fileReader(fileName)
-        optionSelected = AdminOptions.adminWelcomeScreen()
+    if counter == 0:  # To print the welcome screen only on the first run
+        returnList = Customer.welcomeScreen()
+        counter += 1
+    if returnList[0] == 'client':
+        clientInteractions()
+    elif returnList[0] == 'admin':
+        adminInteractions()
     continueLoop = input(
         "\nDo you want to continue? Type Y for yes or hit any other key to quit program ")
-    if continueLoop.upper() == "Y":
-        continue
+    if continueLoop.upper() == "Y" and returnList[0] == 'client':
+        counter += 1
+        print(f'\nEnter details on {counter} client')
+        returnList = Customer.client()
+    elif continueLoop.upper() == "Y" and returnList[0] == 'admin':
+        adminInteractions()
     else:
-        print("Quitting Program")
-        sys.exit()
+        quitProgram()
