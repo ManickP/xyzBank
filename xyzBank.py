@@ -66,8 +66,8 @@ class Customer:
         optionList = ["Client", "Admin", "Quit Program"]
         for eno, item in enumerate(optionList):
             print(f'{eno+1} - {item}')
-        message = "\nEnter an option number from above -> "
-        optionSelected = Customer.inputCheckInt(message, len(optionList))
+        optionSelected = Customer.inputCheckInt(
+            "\nEnter an option number from above -> ", len(optionList))
         if optionSelected == 1:
             profile, uname, age, amount = Customer.client()
             return [profile, uname, age, amount]
@@ -153,7 +153,7 @@ class Product:
 
 
 def fileWriter(client_id):  # File writer based on client_id updates value in a list combining customer and product details for the specific client
-    with open("xyz_database.txt", "a") as db_txt_file:
+    with open(fileName, "a") as db_txt_file:
         lineEntryToFile = []
         lineEntryToFile.extend(Customer.clientDetails(client_id))
         lineEntryToFile.extend(Product.productDetails(client_id))
@@ -161,6 +161,46 @@ def fileWriter(client_id):  # File writer based on client_id updates value in a 
         db_txt_file.write(line+'\n')
 
 
+class AdminOptions():  # no initialization of object in this class is created to group functions together
+
+    @staticmethod
+    def adminWelcomeScreen():
+        print("\nHello Admin")
+        adminOptions = ["Show total CHQ account", "Show total client",
+                        "Show total based on product code CHQ,CBK,CBW,SAV", "Show customer more than annual income,Quit Program"]
+        for eno, product in enumerate(adminOptions):
+            print(f'{eno+1} - {product}')
+        optionSelected = Customer.inputCheckInt(
+            "\nEnter an option number from above -> ", len(adminOptions))
+        return optionSelected
+
+    @staticmethod
+    def fileReader(filename):
+        try:
+            with open(filename, "r") as db_txt_file_read:
+                all_lines = db_txt_file_read.readlines()
+                return all_lines
+        except:
+            print(f'\nError in finding or opening file - {filename}')
+
+    @staticmethod
+    def totalCHQaccounts(all_lines):  # all_lines are all the entry in the input file
+        pass
+
+    @staticmethod
+    def totalClients(all_lines):
+        pass
+
+    @staticmethod
+    def totalByProductCode(all_lines, product_code):
+        pass
+
+    @staticmethod
+    def totalCustomerAnnualIncome(all_lines, input_income):
+        pass
+
+
+fileName = "xyz_database.txt"
 while True:
     retrunList = Customer.welcomeScreen()
     if retrunList[0] == 'client':
@@ -188,8 +228,11 @@ while True:
             Product.clientProductMapping(
                 client_id, productCode, savAccountNumber)
             fileWriter(client_id)
+    elif retrunList[0] == 'admin':
+        all_lines = AdminOptions.fileReader(fileName)
+        optionSelected = AdminOptions.adminWelcomeScreen()
     continueLoop = input(
-        "\nDo you want to continue enrolling a new clinet? Type Y to continue or hit any other key to quit program ")
+        "\nDo you want to continue? Type Y for yes or hit any other key to quit program ")
     if continueLoop.upper() == "Y":
         continue
     else:
